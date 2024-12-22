@@ -6,7 +6,7 @@ import System.IO
 import System.Exit (exitSuccess)
 
 -- Loops back to menu with current melody state
-menuLoop :: Maybe Melody -> IO ()
+menuLoop :: Maybe (Melody MusicElement) -> IO ()
 menuLoop melody = 
     putStrLn "\n=== Melody Composer Menu ===" >>
     putStrLn "1. Create a new melody" >>
@@ -18,7 +18,7 @@ menuLoop melody =
     getLine >>= \option -> handleOption option melody
 
 -- Handles the user menu options
-handleOption :: String -> Maybe Melody -> IO ()
+handleOption :: String -> Maybe (Melody MusicElement) -> IO ()
 handleOption "1" _ = do
     melody <- createMelody
     menuLoop (Just melody) -- Passes the created melody to the next loop

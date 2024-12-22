@@ -19,58 +19,71 @@ stringToNote str = case wordsWhen (== ',') str of
             _                     -> Left "Invalid pitch or duration format."
     _ -> Left "Invalid note format. Use 'pitch,duration' (e.g., '60,1%4')."
 
+-- Converts a string to a MusicElement
+stringToMusicElement :: String -> Either String MusicElement
+stringToMusicElement str = 
+    case wordsWhen (== ',') str of
+        [pitchStr, durStr] -> 
+            case (reads pitchStr, reads durStr) of
+                ([(p, "")], [(d, "")]) -> Right (SingleNote (Note p d))
+                _ -> Left "Invalid pitch or duration format for note."
+        _ -> case mapM stringToNote (words str) of
+                Right notes -> Right (ChordElement (Chord notes))
+                Left _ -> Left "Invalid chord format. Chords should have multiple notes."
+
 -- Creates a note
 createNote :: Pitch -> Duration -> Note
 createNote p d = Note { pitch = p, duration = d }
 
 -- Prompts the user to create a new melody
-createMelody :: IO Melody
+createMelody :: IO (Melody MusicElement)
 createMelody = do
-    putStrLn "Enter notes for your melody (space-separated, e.g., 60,1%4 62,1%4): "
+    putStrLn "Enter notes and chords for your melody (space-separated). For chords, separate notes with a comma (e.g., 60,1%4 62,1%4 or 60,1%4 62,1%4,64,1%4): "
     input <- getLine
-    let noteStrings = words input -- Space-separated notes
-    let notes = map stringToNote noteStrings
-    case sequence notes of
+    let elementStrings = words input -- Space-separated notes
+    let elements = map stringToMusicElement elementStrings
+    case sequence elements of
         Left err -> do
             putStrLn $ "Error: " ++ err
             createMelody -- Retry on error
-        Right validNotes -> do
+        Right validElements -> do
             putStrLn "Melody created successfully!"
-            return $ Melody validNotes
+            return $ Melody validElements
 
 
 -- Converts a single Note to a String format "pitch,duration"
-noteToString :: Note -> String
-noteToString (Note p d) = show p ++ "," ++ show d
+noteToString :: MusicElement -> String
+noteToString (SingleNote (Note p d)) = show p ++ "," ++ show d
+noteToString (ChordElement (Chord notes)) = unwords (map (noteToString . SingleNote) notes)
 
 -- Saves the melody to a specified file
-saveMelody :: FilePath -> Melody -> IO ()
-saveMelody filePath (Melody notes) = do
-    let content = unlines $ map noteToString notes
+saveMelody :: FilePath -> Melody MusicElement -> IO ()
+saveMelody filePath (Melody elements) = do
+    let content = unlines $ map noteToString elements
     writeFile filePath content
     putStrLn $ "Melody saved to " ++ filePath
 
 -- Parses a single line into a Note
-parseNote :: String -> Maybe Note
-parseNote line = 
-    case stringToNote line of
-        Right note -> Just note
-        Left _ -> Nothing 
+parseMusicElement :: String -> Maybe MusicElement
+parseMusicElement line =
+    case stringToMusicElement line of
+        Right element -> Just element
+        Left _ -> Nothing
 
 -- Loads a melody from a specified file
-loadMelody :: FilePath -> IO (Maybe Melody)
+loadMelody :: FilePath -> IO (Maybe (Melody MusicElement))
 loadMelody filePath = do
     exists <- doesFileExist filePath
     if exists
         then do
             content <- readFile filePath
-            let notes = map parseNote (lines content)
-            if all isJust notes
+            let elements = map parseMusicElement (lines content)
+            if all isJust elements
                 then do
                     putStrLn "Melody loaded successfully!"
-                    return $ Just (Melody (map fromJust notes))
+                    return $ Just (Melody (map fromJust elements))
                 else do
-                    putStrLn "Error: Invalid note data in file!"
+                    putStrLn "Error: Invalid music element data in file!"
                     return Nothing
         else do
             putStrLn "Error: File not found!"
