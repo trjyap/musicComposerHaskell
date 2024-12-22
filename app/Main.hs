@@ -12,7 +12,8 @@ menuLoop melody =
     putStrLn "1. Create a new melody" >>
     putStrLn "2. Save melody to file" >>
     putStrLn "3. Load melody from file" >>
-    putStrLn "4. Exit" >>
+    putStrLn "4. Transpose current melody" >>
+    putStrLn "5. Exit" >>
     putStr "Choose an option: " >>
     hFlush stdout >> -- Ensures the prompt displays before input
     getLine >>= \option -> handleOption option melody
@@ -36,8 +37,22 @@ handleOption "3" _ = do
     hFlush stdout
     filePath <- getLine
     melody <- loadMelody filePath
+    case melody of
+        Just m -> play m -- Print out loaded melody
+        Nothing -> putStrLn "Failed to load melody."
     menuLoop melody
-handleOption "4" _ = do
+handleOption "4" (Just melody) = do
+    putStr "Enter the number of semitones to transpose: "
+    hFlush stdout
+    semitones <- getLine
+    putStrLn "\nTransposing melody..."
+    let transposedMelody = transposeMelody (read semitones) melody
+    play transposedMelody
+    menuLoop (Just transposedMelody)
+handleOption "4" Nothing = do
+    putStrLn "No melody to transpose! Please load a melody first."
+    menuLoop Nothing
+handleOption "5" _ = do
     putStrLn "Exiting... Goodbye!\n"
     exitSuccess
 handleOption _ melody = do
