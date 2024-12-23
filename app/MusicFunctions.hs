@@ -3,9 +3,8 @@ module MusicFunctions where
 
 import MusicData
 import System.Directory (doesFileExist)
-import Data.Maybe (isJust)
-import Data.Ratio (numerator, denominator, (%))
-import Test.QuickCheck (Arbitrary, arbitrary, suchThat)
+import Data.Ratio (numerator, denominator)
+import Test.QuickCheck (quickCheck)
 
 -- Utility function to split a string by a delimiter
 wordsWhen :: (Char -> Bool) -> String -> [String]
@@ -20,7 +19,7 @@ stringToNote str = case wordsWhen (== ',') str of
     [pitchStr, durStr] ->
         case (reads pitchStr, reads durStr) of
             ([(p, "")], [(d, "")]) -> Right (Note p d)
-            _                     -> Left "Invalid pitch or duration format. Ensure it is in the form 'pitch,duration' (e.g., '60,1%4')."
+            _                     -> Left "Invalid pitch or duration format."
     _ -> Left "Invalid note format. Use 'pitch,duration' (e.g., '60,1%4')."
 
 -- Converts a string to a MusicElement
@@ -32,17 +31,14 @@ stringToMusicElement str =
   where
     parseElement :: String -> Either String MusicElement
     parseElement elementStr =
-        -- Try parsing as a single note (pitch,duration)
-        case wordsWhen (== ',') elementStr of
-            [pitchStr, durStr] -> 
-                case (reads pitchStr, reads durStr) of
-                    ([(p, "")], [(d, "")]) -> Right (SingleNote (Note p d))
-                    _ -> Left "Invalid pitch or duration format for note."
-            _ -> 
+        -- Try parsing as a single note
+        case stringToNote elementStr of
+            Right note -> Right (SingleNote note)
+            Left _     ->
                 -- Try parsing as a chord: multiple notes separated by spaces
                 let noteStrings = words elementStr
                 in if length noteStrings > 1
-                    then 
+                    then
                         let notes = map stringToNote noteStrings
                         in case sequence notes of
                             Left err -> Left $ "Invalid chord format. " ++ err
@@ -76,7 +72,6 @@ createMelody = do
             putStrLn "Melody created successfully!"
             return $ Melody validElements
 
-
 -- Converts a single Note to a String format "pitch,duration"
 noteToString :: MusicElement -> String
 noteToString (SingleNote (Note p d)) = show p ++ "," ++ durationToString d
@@ -94,13 +89,6 @@ saveMelody filePath (Melody elements) = do
     writeFile filePath content
     putStrLn $ "Melody saved to " ++ filePath
 
--- Parses a single line into a Note
-parseMusicElement :: String -> Maybe MusicElement
-parseMusicElement line =
-    case stringToMusicElement line of
-        Right element -> Just element
-        Left _ -> Nothing
-
 -- Loads a melody from a specified file
 loadMelody :: FilePath -> IO (Maybe (Melody MusicElement))
 loadMelody filePath = do
@@ -108,11 +96,11 @@ loadMelody filePath = do
     if exists
         then do
             content <- readFile filePath
-            let elements = map parseMusicElement (lines content)
-            if all isJust elements
+            let elements = map stringToMusicElement (lines content)
+            if all isRight elements
                 then do
                     putStrLn "Melody loaded successfully!\n"
-                    return $ Just (Melody (map fromJust elements))
+                    return $ Just (Melody (map fromRight' elements))
                 else do
                     putStrLn "Error: Invalid music element data in file! Please check the format."
                     return Nothing
@@ -120,8 +108,36 @@ loadMelody filePath = do
             putStrLn "Error: File not found! Ensure the file path is correct."
             return Nothing
   where
-    fromJust (Just x) = x
-    fromJust Nothing  = error "Nothing cannot be converted to a value"
+    isRight (Right _) = True
+    isRight _         = False
+    fromRight' (Right x) = x
+    fromRight' (Left _)  = error "Unexpected Left value"
+
+
+-- ====================== Extra functions =========================
+-- Function to combine two melodies into one
+combineMelodies :: Melody MusicElement -> Melody MusicElement -> Melody MusicElement
+combineMelodies melody1 melody2 = melody1 <> melody2
+
+-- Function to transpose a note by a given number of semitones
+transposeNote :: Int -> Note -> Note
+transposeNote interval note = note { pitch = pitch note + interval }
+
+-- Function to transpose an entire melody
+transposeMelody :: Int -> Melody MusicElement -> Melody MusicElement
+transposeMelody interval (Melody elements) = Melody $ map transposeElement elements
+  where
+    transposeElement (SingleNote note) = SingleNote (transposeNote interval note)
+    transposeElement (ChordElement (Chord notes)) =
+        ChordElement (Chord (map (transposeNote interval) notes))
+
+
+-- ===================== QuickCheck functions =====================
+-- QuickCheck property for transposeNote
+prop_transposeNote :: Int -> Note -> Bool
+prop_transposeNote interval note =
+    let transposedNote = transposeNote interval note
+    in pitch transposedNote == pitch note + interval
 
 -- QuickCheck property for stringToNote
 prop_stringToNote :: Note -> Bool
@@ -129,11 +145,8 @@ prop_stringToNote note =
     let noteStr = show (pitch note) ++ "," ++ durationToString (duration note)
     in stringToNote noteStr == Right note
 
--- Arbitrary instance for Duration to generate random durations for testing
-newtype ArbitraryDuration = ArbitraryDuration Duration deriving (Show)
-
-instance Arbitrary ArbitraryDuration where
-    arbitrary = do
-        n <- arbitrary
-        d <- arbitrary `suchThat` (/= 0)
-        return $ ArbitraryDuration (n % d)
+runQuickCheckTests :: IO ()
+runQuickCheckTests = 
+    putStrLn "Running QuickCheck tests..." >>
+    quickCheck prop_transposeNote >>
+    quickCheck prop_stringToNote

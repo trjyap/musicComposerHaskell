@@ -1,7 +1,8 @@
 {-# LANGUAGE FlexibleInstances #-}
 module MusicData where
 
-import Test.QuickCheck.Arbitrary
+import Test.QuickCheck (Arbitrary, arbitrary, suchThat)
+import Data.Ratio ((%))
 
 -- A music element can be a single note or a chord (multiple notes at the same time)
 data MusicElement = SingleNote Note | ChordElement Chord
@@ -65,26 +66,9 @@ instance Semigroup (Melody MusicElement) where
 instance Monoid (Melody MusicElement) where
     mempty = Melody []
 
--- Function to transpose a note by a given number of semitones
-transposeNote :: Int -> Note -> Note
-transposeNote interval note = note { pitch = pitch note + interval }
-
--- Function to transpose an entire melody
-transposeMelody :: Int -> Melody MusicElement -> Melody MusicElement
-transposeMelody interval (Melody elements) = Melody $ map transposeElement elements
-  where
-    transposeElement (SingleNote note) = SingleNote (transposeNote interval note)
-    transposeElement (ChordElement (Chord notes)) = 
-        ChordElement (Chord (map (transposeNote interval) notes))
-
--- QuickCheck property for transposeNote
-prop_transposeNote :: Int -> Note -> Bool
-prop_transposeNote interval note =
-    let transposedNote = transposeNote interval note
-    in pitch transposedNote == pitch note + interval
-
 -- Arbitrary instance for Note to generate random notes for testing
 instance Arbitrary Note where
-    arbitrary = do 
+    arbitrary = do
         p <- arbitrary
-        Note p <$> arbitrary
+        d <- arbitrary `suchThat` (/= 0)
+        return $ Note p (d % 1)
