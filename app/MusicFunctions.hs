@@ -1,9 +1,11 @@
+{-# LANGUAGE FlexibleInstances #-}
 module MusicFunctions where
 
 import MusicData
 import System.Directory (doesFileExist)
 import Data.Maybe (isJust)
-import Data.Ratio (numerator, denominator)
+import Data.Ratio (numerator, denominator, (%))
+import Test.QuickCheck (Arbitrary, arbitrary, suchThat)
 
 -- Utility function to split a string by a delimiter
 wordsWhen :: (Char -> Bool) -> String -> [String]
@@ -120,3 +122,18 @@ loadMelody filePath = do
   where
     fromJust (Just x) = x
     fromJust Nothing  = error "Nothing cannot be converted to a value"
+
+-- QuickCheck property for stringToNote
+prop_stringToNote :: Note -> Bool
+prop_stringToNote note =
+    let noteStr = show (pitch note) ++ "," ++ durationToString (duration note)
+    in stringToNote noteStr == Right note
+
+-- Arbitrary instance for Duration to generate random durations for testing
+newtype ArbitraryDuration = ArbitraryDuration Duration deriving (Show)
+
+instance Arbitrary ArbitraryDuration where
+    arbitrary = do
+        n <- arbitrary
+        d <- arbitrary `suchThat` (/= 0)
+        return $ ArbitraryDuration (n % d)

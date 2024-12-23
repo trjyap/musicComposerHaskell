@@ -4,6 +4,7 @@ import MusicData
 import MusicFunctions
 import System.IO
 import System.Exit (exitSuccess)
+import Test.QuickCheck
 
 -- Loops back to menu with current melody state
 menuLoop :: Maybe (Melody MusicElement) -> IO ()
@@ -63,4 +64,6 @@ handleOption _ melody = do
 main :: IO ()
 main = do
     putStrLn "Welcome to the Haskell Melody Composer!"
+    quickCheck prop_transposeNote
+    quickCheck prop_stringToNote
     menuLoop Nothing
