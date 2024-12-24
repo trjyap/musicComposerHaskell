@@ -1,6 +1,6 @@
 # Musical Composer with Functional Patterns
 
-This is a project for course PRG2214 Functional Programming Principles (Sunway University). It is system that lets the user create melodies for playback by specifiying the pitch and duration. Other functions including saving, loading, transposing, and combining melodies. The playback of melodies is presented in text form showing the pitch and duration of each note/chord instance. 
+This is a project for course PRG2214 Functional Programming Principles (Sunway University). It is system that lets the user create melodies for playback by specifying the pitch and duration. Other functions including saving, loading, transposing, and combining melodies. The playback of melodies is presented in text form showing the pitch and duration of each note/chord instance. 
 
 The system utilises Haskell as a means of practicing implementing functional programming techniques. Instances such as functors and semigroups are used to allow melody shaping methods to be performed at an abstract level. 
 

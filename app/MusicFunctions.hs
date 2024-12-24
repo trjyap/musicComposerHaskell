@@ -125,7 +125,7 @@ transposeNote interval note = note { pitch = pitch note + interval }
 
 -- Function to transpose an entire melody
 transposeMelody :: Int -> Melody MusicElement -> Melody MusicElement
-transposeMelody interval (Melody elements) = Melody $ map transposeElement elements
+transposeMelody interval = fmap transposeElement
   where
     transposeElement (SingleNote note) = SingleNote (transposeNote interval note)
     transposeElement (ChordElement (Chord notes)) =
