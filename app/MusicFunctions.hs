@@ -20,14 +20,14 @@ stringToNote str = case wordsWhen (== ',') str of
         case (reads pitchStr, reads durStr) of
             ([(p, "")], [(d, "")]) -> Right (Note p d)
             _                     -> Left "Invalid pitch or duration format."
-    _ -> Left "Invalid note format. Use 'pitch,duration' (e.g., '60,1%4')."
+    _ -> Left "Invalid note format. Use 'pitch,duration' (e.g., '60,1%4').\n"
 
 -- Converts a string to a MusicElement
 stringToMusicElement :: String -> Either String MusicElement
 stringToMusicElement str =
     case wordsWhen (== '|') str of
         [elementStr] -> parseElement elementStr
-        _            -> Left "Invalid format. Use '|' to separate elements (notes or chords)."
+        _            -> Left "Invalid format. Use '|' to separate elements (notes or chords).\n"
   where
     parseElement :: String -> Either String MusicElement
     parseElement elementStr =
@@ -43,7 +43,7 @@ stringToMusicElement str =
                         in case sequence notes of
                             Left err -> Left $ "Invalid chord format. " ++ err
                             Right validNotes -> Right (ChordElement (Chord validNotes))
-                    else Left "Invalid input format. Please check for commas and spaces."
+                    else Left "Invalid input format. Please check for commas and spaces.\n"
 
 -- Converts a string to a Melody
 stringToMelody :: String -> Either String (Melody MusicElement)
@@ -69,7 +69,7 @@ createMelody = do
             putStrLn $ "Error: " ++ err
             createMelody -- Retry on error
         Right validElements -> do
-            putStrLn "Melody created successfully!"
+            putStrLn "Melody created successfully!\n"
             return $ Melody validElements
 
 -- Converts a single Note to a String format "pitch,duration"
@@ -102,10 +102,10 @@ loadMelody filePath = do
                     putStrLn "Melody loaded successfully!\n"
                     return $ Just (Melody (map fromRight' elements))
                 else do
-                    putStrLn "Error: Invalid music element data in file! Please check the format."
+                    putStrLn "Error: Invalid music element data in file! Please check the format.\n"
                     return Nothing
         else do
-            putStrLn "Error: File not found! Ensure the file path is correct."
+            putStrLn "Error: File not found! Ensure the file path is correct.\n"
             return Nothing
   where
     isRight (Right _) = True
