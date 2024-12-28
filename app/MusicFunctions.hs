@@ -60,7 +60,9 @@ createNote p d = Note { pitch = p, duration = d }
 -- Prompts the user to create a new melody
 createMelody :: IO (Melody MusicElement)
 createMelody = do
-    putStrLn "Enter notes and chords for your melody (separate with \"|\"). For chords, separate notes with a space (e.g., 60,1%4 64,1%4 67,1%4): "
+    putStrLn "Enter notes and chords for your melody (separate with \"|\"). Example: 60,1%4 64,1%4 67,1%4|62,1%4 65,1%4 69,1%4|75,1%1"
+    putStrLn "Use the format 'pitch,duration where pitch is an integer and duration is a fraction (e.g., 60,1%4)."
+    putStrLn "For chords, separate notes with a space (e.g., 60,1%4 64,1%4 67,1%4): "
     input <- getLine
     let elementStrings = wordsWhen (== '|') input -- Pipe-separated notes and chords
     let elements = map stringToMusicElement elementStrings
