@@ -1,4 +1,4 @@
-# Musical Composer with Functional Patterns
+# Melody Composer with Functional Patterns
 
 This is a project for course PRG2214 Functional Programming Principles (Sunway University). It is system that lets the user create melodies for playback by specifying the pitch and duration. Other functions including saving, loading, transposing, and combining melodies. The playback of melodies is presented in text form showing the pitch and duration of each note/chord instance. 
 
