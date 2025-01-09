@@ -5,3 +5,5 @@ This is a project for course PRG2214 Functional Programming Principles (Sunway U
 The system utilises Haskell as a means of practicing implementing functional programming techniques. Instances such as functors and semigroups are used to allow melody shaping methods to be performed at an abstract level. 
 
 There was a plan to use third-party libraries like Euterpea and hmidi so that output could be in midi and also playable/audible. However, there were compatibility issues with ghc, cabal, and even the OS. Given the time constraints, these efforts were scrapped in favour of releasing a working project without midi implementation. Hence the pitch values are still in Int to correlate with midi values, where it could possibly be worked on in the future. 
+
+Video showcase: https://www.youtube.com/watch?v=A4X-l0n0ejU
